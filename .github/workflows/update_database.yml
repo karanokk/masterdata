@@ -23,12 +23,22 @@ jobs:
       id: args
     - uses: actions/checkout@v2
     - name: Use Python 3.7
-    - uses: actions/setup-python@v2
+      uses: actions/setup-python@v2
       with:
         python-version: '3.7'
-    - name: Install Dependencies
-    - uses: dschep/install-pipenv-action@v1
-    - run: pipenv install
+    - name: Install Pipenv
+      uses: dschep/install-pipenv-action@v1
+    - name: Cache Python dependencies
+      id: cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-masterdata-cache
+        restore-keys: |
+          ${{ runner.os }}-masterdata-cache
+    - name: Install
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: pipenv install
     - name: Get Gist
       id: get
       uses: andymckay/get-gist-action@master
