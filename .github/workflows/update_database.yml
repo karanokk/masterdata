@@ -37,7 +37,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-masterdata-cache
     - name: Install Dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
       run: pipenv install
     - name: Get Gist
       id: get
