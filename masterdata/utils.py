@@ -21,3 +21,6 @@ class AppSession:
     def close(cls):
         if cls._session:
             cls._session.close()
+
+    def __del__(self):
+        self.close()

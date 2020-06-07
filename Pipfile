@@ -12,6 +12,7 @@ v = {editable = true,version = "*"}
 [packages]
 aiohttp = "*"
 lzstring = "*"
+lxml = "*"
 
 [requires]
 python_version = "3.7"
