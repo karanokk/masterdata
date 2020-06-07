@@ -14,4 +14,4 @@ def main():
     if filepath is None:
         filepath = './masterdata.sqlite3'
     masterdata = MasterData(options.verpath)
-    masterdata.make(filepath)
+    masterdata.make_jp_database(filepath)
