@@ -29,7 +29,7 @@ def get_essence_crafts():
 
 
 def _match_csv_str(pagename: str):
-    text = endpoint.parse(ParseProp.text, page=pagename)
+    text = endpoint.parse(ParseProp.text, page=pagename)["parse"]["text"]
     matched = re.search(r'var raw_str = "(.*)";', text)
     if matched:
         return matched.group(1)

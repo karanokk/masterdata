@@ -24,3 +24,7 @@ class AppSession:
 
     def __del__(self):
         self.close()
+
+
+def flatten(li):
+    return [item for sub_list in li for item in sub_list]

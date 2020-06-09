@@ -15,7 +15,7 @@ def parse_list(s: str, *, transform: callable = str):
     if s.startswith('['):
         result = s[1:-1].split('],[')
         return [transform(s) for s in s.split(',') for x in result]
-    return [transform(s) for s in s.split(',')]
+    return [transform(s) for s in s.split(',') if s]
 
 
 def sqlite_type(obj: object) -> str:
