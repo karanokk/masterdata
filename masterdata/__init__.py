@@ -13,5 +13,6 @@ def main():
     filepath = options.filepath
     if filepath is None:
         filepath = './masterdata.sqlite3'
-    masterdata = MasterData(options.verpath)
-    masterdata.make_jp_database(filepath)
+    # masterdata = MasterData(options.verpath)
+    # masterdata.make_jp_database(filepath)
+    MasterData.translate_using_mooncell()

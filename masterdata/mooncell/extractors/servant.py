@@ -24,9 +24,9 @@ class ServantExtractor(MooncellExtractor):
         name = table.xpath('string(tbody/tr[1]/th[1])').rstrip('\n')
         return name
 
-    def collectionNo(self):
+    def extract_collection_no(self):
         table = next(self.find_tables('基础数值', self.WT_NOMOBILE))
-        res = table.xpath('string(tbody/tr[1]/th[2])').rstrip('\n')
+        res = table.xpath('tbody/tr[1]/th[2]/text()')[0]
         return int(res[3:])
 
     def extract_treasure_devices(self):
@@ -38,11 +38,11 @@ class ServantExtractor(MooncellExtractor):
             if title and (title.endswith('限定') or title.startswith('灵基再临')):
                 continue
             name = trs[0].xpath('string(td/div/big)')
-            typeText = trs[0].xpath('string(th/p[last()])')
+            type_text = trs[0].xpath('string(th/p[last()])')
             detail, value = self._extract_detail(trs[2 - len(trs) % 2:])
 
-            # td = MCTreasureDevice(name, typeText, *detail, title)
-            td = {'name': name, 'typeText': typeText,
+            # td = MCTreasureDevice(name, type_text, *detail, title)
+            td = {'name': name, 'type_text': type_text,
                   'detail': detail, 'value': value, 'title': title}
             tds.append(td)
         return tds
@@ -120,7 +120,7 @@ class ServantExtractor(MooncellExtractor):
         for table in self.find_tables('灵基再临（从者进化）', self.WT_NOMOBILE):
             return self._extract_materials(table)
 
-    def extract_bondstories(self):
+    def extract_bond_stories(self):
         stories = []
         for table in self.find_tables('资料', self.WT):
             trs = table.xpath('tbody/tr')
