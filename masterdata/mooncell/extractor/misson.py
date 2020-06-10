@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 
-from .base import MooncellExtractor
+from .common import MooncellExtractor
 
 
 class MissionExtractor(MooncellExtractor):

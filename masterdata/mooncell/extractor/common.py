@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+import logging
+logger = logging.getLogger('masterdata.mooncell')
 
 
-class MediaWikiExtractor(object):
+class MediaWikiExtractor:
     def __init__(self, html):
         """`html`起始于`<div class="mw-parser-output">`
         """
@@ -24,6 +26,23 @@ class MediaWikiExtractor(object):
                     len(tag) > 1 and tag.startswith('h') and tag < stop_tag):
                 break
             yield node
+
+    def title(self):
+        return self.root.xpath('/html/head/title/text()')
+
+    def extract(self):
+        info_dict = {}
+        for func_name in type(self).__dict__.keys():
+            if func_name.startswith("extract_"):
+                name = func_name[8:]
+                extract_fn = getattr(self, func_name)
+                try:
+                    res = extract_fn()
+                except:
+                    logger.error(f'Failed to extract {name} in "{self.title()}".')
+                else:
+                    info_dict[name] = res
+        return info_dict
 
 
 class MooncellExtractor(MediaWikiExtractor):
