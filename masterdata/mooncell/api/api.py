@@ -1,18 +1,18 @@
 import re
 
-from .MediaWikiEndpoint import MediaWikiEndpoint, ParseProp, QueryProp
+from .MediaWikiEndpoint import MediaWikiEndpoint, ParseProp
 from .model import MCEssenceCraftItem, MCServantItem
 
 endpoint = MediaWikiEndpoint('https://fgo.wiki/api.php')
 
 
-def get_page(pagename: str):
-    page = endpoint.parse(ParseProp.text, page=pagename)
+def get_page(page_name: str):
+    page = endpoint.parse(ParseProp.text, page=page_name)
     return page["parse"]["text"]
 
 
-async def async_get_page(pagename: str):
-    page = await endpoint.async_parse(ParseProp.text, page=pagename)
+async def async_get_page(page_name: str):
+    page = await endpoint.async_parse(ParseProp.text, page=page_name)
     return page["parse"]["text"]
 
 
@@ -28,8 +28,8 @@ def get_essence_crafts():
     return [MCEssenceCraftItem(row.split(',')) for row in rows]
 
 
-def _match_csv_str(pagename: str):
-    text = endpoint.parse(ParseProp.text, page=pagename)["parse"]["text"]
+def _match_csv_str(page_name: str):
+    text = get_page(page_name)
     matched = re.search(r'var raw_str = "(.*)";', text)
     if matched:
         return matched.group(1)

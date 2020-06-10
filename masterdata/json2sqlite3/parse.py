@@ -2,7 +2,6 @@ from typing import Union, List, Optional
 
 
 def list2str(l: Union[list, str]) -> str:
-    """Format `list` as `str`."""
     if isinstance(l, list):
         res = ','.join(map(list2str, l))
         return f"[{res}]"
@@ -10,12 +9,16 @@ def list2str(l: Union[list, str]) -> str:
         return str(l)
 
 
-def parse_list(s: str, *, transform: callable = str):
-    s = s[1:-1]
+def restore_list(s: str, *, transform: callable = str):
     if s.startswith('['):
-        result = s[1:-1].split('],[')
-        return [transform(s) for s in s.split(',') for x in result]
-    return [transform(s) for s in s.split(',') if s]
+        s = s[1:]
+    if s.endswith(']'):
+        s = s[:-1]
+    if s.startswith('['):
+        result = s.split('],[')
+        return [restore_list(x, transform=transform) for x in result]
+    else:
+        return [transform(s) for s in s.split(',') if s]
 
 
 def sqlite_type(obj: object) -> str:
@@ -34,11 +37,11 @@ def sqlite_type(obj: object) -> str:
         raise TypeError('Unsupported type.')
 
 
-def parse_creation_sql(table_name: str, row: dict, *, primary_key=None):
+def creation_sql(table_name: str, row: dict, *, primary_key=None):
     definitions = []
     for key, value in row.items():
-        stype = sqlite_type(value)
-        words = [key, stype]
+        s_type = sqlite_type(value)
+        words = [key, s_type]
         if primary_key == key:
             words.append('PRIMARY KEY')
         column_definition = ' '.join(words)
@@ -47,7 +50,7 @@ def parse_creation_sql(table_name: str, row: dict, *, primary_key=None):
     return sql
 
 
-def find_possible_primary_keys(rows: List[dict]) -> Optional[List[str]]:
+def possible_primary_keys(rows: List[dict]) -> Optional[List[str]]:
     temp = {key: set()
             for key, value in rows[0].items() if isinstance(value, int)}
     for row in rows:

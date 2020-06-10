@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
 
-from .base import MooncellExtractor
+from .common import MooncellExtractor
+import logging
+logger = logging.getLogger('masterdata.mooncell')
 
 
 class ServantExtractor(MooncellExtractor):
+
     @staticmethod
     def _extract_detail(trs):
         names = []
