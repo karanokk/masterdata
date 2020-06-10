@@ -17,7 +17,8 @@ def main():
 
     old_id = read_master_js_id(verpath) if verpath else None
     new_id = masterdata.make_masterdata(filepath, old_id)
-    if integrate_path:
-        masterdata.integrate_with_mooncell(filepath, integrate_path)
-    if new_id and verpath:
-        write_new_master_js_id(verpath)
+    if new_id:
+        if integrate_path:
+            masterdata.integrate_with_mooncell(filepath, integrate_path)
+        if verpath:
+            write_new_master_js_id(verpath)
