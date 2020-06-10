@@ -19,7 +19,7 @@ jobs:
       run: |
         d=`TZ=Asia/Shanghai date +%Y%m%d%H`
         echo ::set-output name=ver::$d
-        echo ::set-output name=dbname::database_$d
+        echo ::set-output name=dbname::masterdata_$d
       id: args
     - uses: actions/checkout@v2
     - name: Use Python 3.7
@@ -47,8 +47,8 @@ jobs:
     - name: Make database
       id: database
       run: |
-        product_path='./database.sqlite3'
-        pipenv run python -m masterdata -f $product_path --verpath ${{ steps.get.outputs.file }}
+        product_path='./masterdata.sqlite3'
+        pipenv run python -m masterdata -f $product_path -F $product_path --verpath ${{ steps.get.outputs.file }}
         [ -f $product_path ] && echo ::set-output name=hasUpdate::true && zip -r ./${{ steps.args.outputs.dbname }}.zip $product_path || echo ::set-output name=hasUpdate::false
     - name: Create Release
       id: create_release
