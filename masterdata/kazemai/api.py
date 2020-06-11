@@ -34,7 +34,9 @@ def masterdata() -> dict:
     return decode_master_js(text)
 
 
-async def async_get_svt_comment(svt_id: int, session: aiohttp.ClientSession = AppSession.session()):
+async def async_get_svt_comment(svt_id: int, session: aiohttp.ClientSession = None):
+    if not session:
+        session = AppSession.session()
     url = urljoin(KazemaiURL.svt_comment_jp, str(svt_id))
     async with session.get(url) as resp:
         if resp.status == 404:

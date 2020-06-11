@@ -132,7 +132,9 @@ class MediaWikiEndpoint:
         j = json.loads(r)
         return j
 
-    async def async_request_json(self, params: dict, session: aiohttp.ClientSession = AppSession.session()) -> dict:
+    async def async_request_json(self, params: dict, session: aiohttp.ClientSession = None) -> dict:
+        if not session:
+            session = AppSession.session()
         async with session.get(self.domain, params=params) as resp:
             j = await resp.json()
             return j
