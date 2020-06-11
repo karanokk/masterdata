@@ -36,6 +36,7 @@ def read_master_js_id(file):
         ver = json.load(f)
     return ver["master_js_id"]
 
+
 def write_new_master_js_id(file):
     with open(file, 'r+') as f:
         ver = json.load(f)

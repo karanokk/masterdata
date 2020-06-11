@@ -17,13 +17,15 @@ class ServantIG(Integrator):
 
     def integrate(self, servant):
         collection_no = servant["collection_no"]
+        if not collection_no:
+            return
         svt_id = self.svt_id(collection_no)
         self.td_ig.integrate(svt_id, servant["treasure_devices"])
         self.skill_ig.integrate(svt_id, servant["skills"])
         self.class_skill_ig.integrate(svt_id, servant["passives"])
         self.material_ig.integrate(svt_id, servant["ascension_materials"])
         self.material_ig.integrate(svt_id, servant["skill_materials"])
-        # self.comment_ig.integrate(svt_id, servant["stories"])
+        self.comment_ig.integrate(svt_id, servant["stories"])
 
     def svt_id(self, collection_no):
         sql = """SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2);"""
