@@ -1,17 +1,17 @@
 from os.path import join
 
-from .extract import extract_all_servants
+from .extract import extract_servants
 from .integrator import ServantIG
 from ..json2sqlite3 import JSDatabase
 
 
 def dump(dir_name: str):
     import json
-    servants = extract_all_servants()
+    servants = extract_servants()
     for servant in servants:
         path = join(dir_name, f'No.{servant["collection_no"]}_{servant["name"]}.json')
         with open(path, 'w+') as f:
-            json.dump(servant, path)
+            json.dump(servant, f)
 
 
 def integrate_into_db(path):
@@ -23,7 +23,8 @@ def integrate_into_db(path):
     Some custom tables(contents from `mooncell`) will be added.
     """
     con = JSDatabase(path).con
-    servants = extract_all_servants()
+    servants = extract_servants()
+    servants.pop(0)
     servant_ig = ServantIG(con)
     for servant in servants:
         servant_ig.integrate(servant)
@@ -32,4 +33,4 @@ def integrate_into_db(path):
     con.close()
 
 
-__all__ = ['dump', 'integrate_into_db']
+__all__ = ['dump', 'integrate_into_db', 'extract_servants']

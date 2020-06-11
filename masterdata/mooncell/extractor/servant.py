@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
 import re
 
 from .common import MooncellExtractor
-import logging
+
 logger = logging.getLogger('masterdata.mooncell')
 
 
@@ -29,7 +30,9 @@ class ServantExtractor(MooncellExtractor):
 
     def extract_collection_no(self):
         table = next(self.find_tables('基础数值', self.WT_NOMOBILE))
-        res = table.xpath('tbody/tr[1]/th[2]/text()')[0]
+        res = table.xpath('tbody/tr[1]/th[2]/text()')[0].rstrip('\n')
+        if not res:
+            res = table.xpath('tbody/tr[3]/th/text()')[0].rstrip('\n')
         return int(res[3:])
 
     def extract_treasure_devices(self):
@@ -118,14 +121,18 @@ class ServantExtractor(MooncellExtractor):
     def extract_skill_materials(self):
         for table in self.find_tables('技能强化', self.WT_NOMOBILE):
             return self._extract_materials(table)
+        return []
 
     def extract_ascension_materials(self):
         for table in self.find_tables('灵基再临（从者进化）', self.WT_NOMOBILE):
             return self._extract_materials(table)
+        return []
 
     def extract_bond_stories(self):
         stories = []
         for table in self.find_tables('资料', self.WT):
+            if not table.getprevious().get('class'):
+                continue
             trs = table.xpath('tbody/tr')
             assert (len(trs) == 2)
             cond = trs[0].xpath('string(th)').rstrip('\n')

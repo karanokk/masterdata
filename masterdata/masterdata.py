@@ -6,7 +6,7 @@ logger = logging.getLogger('masterdata')
 
 
 def make_masterdata(path: str, old_id: str = None):
-    new_id = kazemai.lastest_master_js_id()
+    new_id = kazemai.master_js_id()
     if old_id == new_id:
         logger.info('Up to date, quit.')
         return

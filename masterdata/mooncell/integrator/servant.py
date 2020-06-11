@@ -18,8 +18,6 @@ class ServantIG(Integrator):
 
     def integrate(self, servant):
         collection_no = servant["collection_no"]
-        if not collection_no:
-            return
         svt_id = self.svt_id(collection_no)
 
         try:
@@ -31,16 +29,19 @@ class ServantIG(Integrator):
             self.skill_ig.integrate(svt_id, servant["skills"])
         except MismatchedData as err:
             self.logger.error(f'{servant["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
+
         self.class_skill_ig.integrate(svt_id, servant["passives"])
+
         try:
             self.material_ig.integrate(svt_id, servant["ascension_materials"])
             self.material_ig.integrate(svt_id, servant["skill_materials"])
         except MismatchedData as err:
             self.logger.error(f'{servant["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
-        # self.comment_ig.integrate(svt_id, servant["stories"])
+
+        self.comment_ig.integrate(svt_id, servant["bond_stories"])
 
     def svt_id(self, collection_no):
-        sql = """SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2);"""
+        sql = """SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2 or type=9);"""
         res = self.con.execute(sql, (collection_no,)).fetchone()
         return res[0]
 
@@ -78,7 +79,7 @@ class ServantTreasureDeviceIG(Integrator):
                 if mst_td[1] == strength_status and mst_td[2] == flag:
                     td_id = mst_td[0]
                     self.update_treasure_device(
-                        td_id, td["name"], td["typeText"])
+                        td_id, td["name"], td["type_text"])
                     self.update_treasure_device_detail(
                         td_id, td["detail"], td["value"])
                     break
@@ -89,10 +90,9 @@ class ServantTreasureDeviceIG(Integrator):
     @classmethod
     def _pre_process(cls, treasure_devices):
         treasure_devices = sorted(treasure_devices, key=lambda td: td["title"])
-        first = treasure_devices[0]
-        if len(treasure_devices) > 2 and first['title'] == '真名解放、强化后':
+        if len(treasure_devices) > 2 and treasure_devices[0]['title'] == '真名解放、强化后':
             # add treasure device(ignored by mooncell)
-            new = deepcopy(first)
+            new = deepcopy(treasure_devices[0])
             new["name"] = '？？？'
             new["title"] = '强化后'
             treasure_devices.insert(1, new)
@@ -182,6 +182,8 @@ class ServantMaterialIG(Integrator):
         self.add_column('mstItem', cnName='TEXT')
 
     def integrate(self, svt_id: int, masterials):
+        if not masterials:
+            return
         if len(masterials) < 5:
             self.update_ascension_materials(svt_id, masterials)
         else:
@@ -218,12 +220,12 @@ class ServantMaterialIG(Integrator):
 
 class ServantCommentIG(Integrator):
     def setup(self):
-        self.rename_column('mstSvtComment', name='jpComment')
+        self.rename_column('mstSvtComment', comment='jpComment')
         self.add_column('mstSvtComment', cnComment='TEXT')
 
     def integrate(self, svt_id: int, comments):
         for index, comment in enumerate(comments):
-            self.update_comment(svt_id, index + 1, comment)
+            self.update_comment(svt_id, index + 1, comment[1])
 
     def update_comment(self, svt_id, index, comment):
         self.con.execute('UPDATE mstSvtComment SET cnComment=? WHERE svtId=? and id=?',
