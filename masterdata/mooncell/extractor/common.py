@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
 import logging
+
+from lxml import etree
+
 logger = logging.getLogger('masterdata.mooncell')
 
 
@@ -28,7 +30,7 @@ class MediaWikiExtractor:
             yield node
 
     def title(self):
-        return self.root.xpath('/html/head/title/text()')
+        return self.root.xpath('/html/head/title/text()')[0]
 
     def extract(self):
         info_dict = {}
