@@ -6,7 +6,7 @@ class Integrator:
     def __init__(self, con: sqlite3.Connection):
         self.con = con
         # TODO: register adaptor
-        # self.setup()
+        self.setup()
         self.logger = logging.getLogger('masterdata.mooncell')
 
     def setup(self):

@@ -2,6 +2,7 @@ import sqlite3
 from copy import deepcopy
 
 from .common import Integrator
+from ..exceptions import MismatchedData
 from ...utils import flatten
 
 
@@ -20,12 +21,23 @@ class ServantIG(Integrator):
         if not collection_no:
             return
         svt_id = self.svt_id(collection_no)
-        self.td_ig.integrate(svt_id, servant["treasure_devices"])
-        self.skill_ig.integrate(svt_id, servant["skills"])
+
+        try:
+            self.td_ig.integrate(svt_id, servant["treasure_devices"])
+        except MismatchedData as err:
+            self.logger.error(f'{servant["name"]}: mismatched treasure devices\n{err.mc_data}\n{err.mst_data}')
+
+        try:
+            self.skill_ig.integrate(svt_id, servant["skills"])
+        except MismatchedData as err:
+            self.logger.error(f'{servant["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
         self.class_skill_ig.integrate(svt_id, servant["passives"])
-        self.material_ig.integrate(svt_id, servant["ascension_materials"])
-        self.material_ig.integrate(svt_id, servant["skill_materials"])
-        self.comment_ig.integrate(svt_id, servant["stories"])
+        try:
+            self.material_ig.integrate(svt_id, servant["ascension_materials"])
+            self.material_ig.integrate(svt_id, servant["skill_materials"])
+        except MismatchedData as err:
+            self.logger.error(f'{servant["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
+        # self.comment_ig.integrate(svt_id, servant["stories"])
 
     def svt_id(self, collection_no):
         sql = """SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2);"""
@@ -45,10 +57,6 @@ class ServantTreasureDeviceIG(Integrator):
     def integrate(self, svt_id: int, treasure_devices):
         tds = self._pre_process(treasure_devices)
         mst_tds = self.masterdata_treasure_devices(svt_id)
-
-        if len(mst_tds) != len(tds):
-            self.logger.warning(
-                f'Treasure devices count not match: [mooncell: database] = [{len(tds)} : {mst_tds}]')
 
         for td in tds:
             title = td["title"]
@@ -74,6 +82,9 @@ class ServantTreasureDeviceIG(Integrator):
                     self.update_treasure_device_detail(
                         td_id, td["detail"], td["value"])
                     break
+
+        if len(mst_tds) != len(tds):
+            raise MismatchedData(tds, mst_tds)
 
     @classmethod
     def _pre_process(cls, treasure_devices):
@@ -114,9 +125,6 @@ class ServantSkillIG(Integrator):
     def integrate(self, svt_id: int, skills):
         mst_skills = self.masterdata_skills(svt_id)
 
-        if len(mst_skills) != len(skills):
-            self.logger.warning(
-                f'Skills count not match: [mooncell: database] = [{len(skills)} : {len(mst_skills)}]')
         for skill in skills:
             title = skill["title"]
             strength_status = 0
@@ -133,6 +141,9 @@ class ServantSkillIG(Integrator):
                     self.update_skill(skill_id, skill["name"])
                     self.update_skill_detail(
                         skill_id, skill["detail"], skill["value"])
+
+        if len(mst_skills) != len(skills):
+            raise MismatchedData(skills, mst_skills)
 
     def masterdata_skills(self, svt_id: int):
         res = self.con.execute("SELECT skillId, strengthStatus, flag, num FROM mstSvtSkill WHERE svtId=?",
@@ -191,7 +202,8 @@ class ServantMaterialIG(Integrator):
     def _update_material(self, item_ids, name_groups):
         item_ids = flatten(item_ids)
         names = flatten(name_groups)
-        assert len(names) == len(item_ids)
+        if len(names) != len(item_ids):
+            raise MismatchedData(names, item_ids)
         self.con.executemany(
             'UPDATE mstItem SET cnName=? WHERE id=?', zip(names, item_ids))
 

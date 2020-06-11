@@ -1,7 +1,7 @@
 from optparse import OptionParser
 
 from . import masterdata
-from .utils import read_master_js_id, write_new_master_js_id
+from .utils import read_master_js_id, write_new_master_js_id, AppSession
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
 
     old_id = read_master_js_id(verpath) if verpath else None
     new_id = masterdata.make_masterdata(filepath, old_id)
-    if new_id:
+    if True:
         if integrate_path:
             masterdata.integrate_with_mooncell(filepath, integrate_path)
         if verpath:
