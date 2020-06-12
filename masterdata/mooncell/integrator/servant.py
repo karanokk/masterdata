@@ -17,31 +17,31 @@ class ServantIG(Integrator):
         self.comment_ig = ServantCommentIG(con)
 
     def integrate(self, servant):
-        collection_no = servant["collection_no"]
+        collection_no = servant['collection_no']
         svt_id = self.svt_id(collection_no)
 
         try:
-            self.td_ig.integrate(svt_id, servant["treasure_devices"])
+            self.td_ig.integrate(svt_id, servant['treasure_devices'])
         except MismatchedData as err:
             self.logger.error(f'{servant["name"]}: mismatched treasure devices\n{err.mc_data}\n{err.mst_data}')
 
         try:
-            self.skill_ig.integrate(svt_id, servant["skills"])
+            self.skill_ig.integrate(svt_id, servant['skills'])
         except MismatchedData as err:
             self.logger.error(f'{servant["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
 
-        self.class_skill_ig.integrate(svt_id, servant["passives"])
+        self.class_skill_ig.integrate(svt_id, servant['passives'])
 
         try:
-            self.material_ig.integrate(svt_id, servant["ascension_materials"])
-            self.material_ig.integrate(svt_id, servant["skill_materials"])
+            self.material_ig.integrate(svt_id, servant['ascension_materials'])
+            self.material_ig.integrate(svt_id, servant['skill_materials'])
         except MismatchedData as err:
             self.logger.error(f'{servant["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
 
-        self.comment_ig.integrate(svt_id, servant["bond_stories"])
+        self.comment_ig.integrate(svt_id, servant['bond_stories'])
 
     def svt_id(self, collection_no):
-        sql = """SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2 or type=9);"""
+        sql = 'SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2 or type=9);'
         res = self.con.execute(sql, (collection_no,)).fetchone()
         return res[0]
 
@@ -60,7 +60,7 @@ class ServantTreasureDeviceIG(Integrator):
         mst_tds = self.masterdata_treasure_devices(svt_id)
 
         for td in tds:
-            title = td["title"]
+            title = td['title']
             strength_status = 0
             flag = 0
             if title == '强化前':
@@ -79,9 +79,9 @@ class ServantTreasureDeviceIG(Integrator):
                 if mst_td[1] == strength_status and mst_td[2] == flag:
                     td_id = mst_td[0]
                     self.update_treasure_device(
-                        td_id, td["name"], td["type_text"])
+                        td_id, td['name'], td['type_text'])
                     self.update_treasure_device_detail(
-                        td_id, td["detail"], td["value"])
+                        td_id, td['detail'], td['value'])
                     break
 
         if len(mst_tds) != len(tds):
@@ -89,27 +89,27 @@ class ServantTreasureDeviceIG(Integrator):
 
     @classmethod
     def _pre_process(cls, treasure_devices):
-        treasure_devices = sorted(treasure_devices, key=lambda td: td["title"])
+        treasure_devices = sorted(treasure_devices, key=lambda td: td['title'])
         if len(treasure_devices) > 2 and treasure_devices[0]['title'] == '真名解放、强化后':
             # add treasure device(ignored by mooncell)
             new = deepcopy(treasure_devices[0])
-            new["name"] = '？？？'
-            new["title"] = '强化后'
+            new['name'] = '？？？'
+            new['title'] = '强化后'
             treasure_devices.insert(1, new)
         return treasure_devices
 
     def masterdata_treasure_devices(self, svt_id: int):
         res = self.con.execute(
-            "SELECT treasureDeviceId, strengthStatus, flag FROM mstSvtTreasureDevice WHERE svtId=? AND num=1",
+            'SELECT treasureDeviceId, strengthStatus, flag FROM mstSvtTreasureDevice WHERE svtId=? AND num=1',
             (svt_id,)).fetchall()
         return res
 
     def update_treasure_device(self, treasure_device_id, name, type_text):
-        self.con.execute("UPDATE mstTreasureDevice SET cnName=?, cnTypeText=? WHERE id=?",
+        self.con.execute('UPDATE mstTreasureDevice SET cnName=?, cnTypeText=? WHERE id=?',
                          (name, type_text, treasure_device_id))
 
     def update_treasure_device_detail(self, treasure_device_id, descriptions, level_values):
-        self.con.execute("UPDATE mstTreasureDeviceDetail SET cnDescriptions=?, levelValues=? WHERE id=?",
+        self.con.execute('UPDATE mstTreasureDeviceDetail SET cnDescriptions=?, levelValues=? WHERE id=?',
                          (descriptions, level_values, treasure_device_id))
 
 
@@ -126,36 +126,36 @@ class ServantSkillIG(Integrator):
         mst_skills = self.masterdata_skills(svt_id)
 
         for skill in skills:
-            title = skill["title"]
+            title = skill['title']
             strength_status = 0
             if title == '强化前':
                 strength_status = 1
             elif title == '强化后':
                 strength_status = 2
-            num = skill["num"]
+            num = skill['num']
             flag = 0
 
             for mst_skill in mst_skills:
                 if mst_skill[3] == num and mst_skill[1] == strength_status and mst_skill[2] == flag:
                     skill_id = mst_skill[0]
-                    self.update_skill(skill_id, skill["name"])
+                    self.update_skill(skill_id, skill['name'])
                     self.update_skill_detail(
-                        skill_id, skill["detail"], skill["value"])
+                        skill_id, skill['detail'], skill['value'])
 
         if len(mst_skills) != len(skills):
             raise MismatchedData(skills, mst_skills)
 
     def masterdata_skills(self, svt_id: int):
-        res = self.con.execute("SELECT skillId, strengthStatus, flag, num FROM mstSvtSkill WHERE svtId=?",
+        res = self.con.execute('SELECT skillId, strengthStatus, flag, num FROM mstSvtSkill WHERE svtId=?',
                                (svt_id,)).fetchall()
         return res
 
     def update_skill(self, skill_id, name):
         self.con.execute(
-            "UPDATE mstSkill SET cnName=? WHERE id=?", (name, skill_id))
+            'UPDATE mstSkill SET cnName=? WHERE id=?', (name, skill_id))
 
     def update_skill_detail(self, skill_id, descriptions, level_values):
-        self.con.execute("UPDATE mstSkillDetail SET cnDescriptions=?, levelValues=? WHERE id=?",
+        self.con.execute('UPDATE mstSkillDetail SET cnDescriptions=?, levelValues=? WHERE id=?',
                          (descriptions, level_values, skill_id))
 
 
@@ -166,9 +166,9 @@ class ServantClassSkillIG(ServantSkillIG):
     def integrate(self, svt_id: int, skills):
         class_passive_ids = self.masterdata_class_passive_ids(svt_id)
         for skill_id, skill in zip(class_passive_ids, skills):
-            self.update_skill(skill_id, skill["name"])
+            self.update_skill(skill_id, skill['name'])
             self.update_skill_detail(
-                skill_id, skill["detail"], skill["value"])
+                skill_id, skill['detail'], skill['value'])
 
     def masterdata_class_passive_ids(self, svt_id):
         res = self.con.execute('SELECT classPassive as "classPassive [intList]" FROM mstSvt WHERE id=?',
