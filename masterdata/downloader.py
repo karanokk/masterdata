@@ -17,6 +17,7 @@ def download_file(url, timeout=10):
 def download_files(urls, concurrency_limit=10, headers=None):
     async def async_download(sem, session: aiohttp.ClientSession, url):
         async with sem, session.get(url) as response:
+            assert response.status == 200
             return await response.read()
 
     async def main():
