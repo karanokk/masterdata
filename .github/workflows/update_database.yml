@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Set version number & database name
       run: |
@@ -43,7 +43,6 @@ jobs:
       uses: andymckay/get-gist-action@master
       with:
         gistURL: "https://gist.github.com/karanokk/e1c276da121c2a231dabcaba5c07b682"
-    - uses: actions/checkout@v2
     - name: Make database
       id: database
       run: |
