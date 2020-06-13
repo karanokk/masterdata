@@ -11,10 +11,10 @@ def read_master_js_id(file):
     return ver["master_js_id"]
 
 
-def write_new_master_js_id(file):
+def write_new_master_js_id(file, j_id):
     with open(file, 'r+') as f:
         ver = json.load(f)
         f.seek(0)
         f.truncate()
-        ver["master_js_id"] = id
+        ver["master_js_id"] = j_id
         json.dump(ver, f)

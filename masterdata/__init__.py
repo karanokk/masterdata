@@ -21,4 +21,4 @@ def main():
         if integrate_path:
             masterdata.integrate_with_mooncell(filepath, integrate_path)
         if verpath:
-            write_new_master_js_id(verpath)
+            write_new_master_js_id(verpath, new_id)
