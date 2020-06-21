@@ -16,6 +16,10 @@ class ServantIG(Integrator):
         self.material_ig = ServantMaterialIG(con)
         self.comment_ig = ServantCommentIG(con)
 
+    def setup(self):
+        self.rename_column('mstSvt', name='jpName')
+        self.add_column('mstSvt', cnName='TEXT')
+
     def integrate(self, servant):
         collection_no = servant['collection_no']
         svt_id = self.svt_id(collection_no)
@@ -44,6 +48,9 @@ class ServantIG(Integrator):
         sql = 'SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2 or type=9);'
         res = self.con.execute(sql, (collection_no,)).fetchone()
         return res[0]
+
+    def update_svt_name(self, svt_id, name):
+        self.con.execute('UPDATE mstSvt SET cnName=?, WHERE id=?', (name, svt_id))
 
 
 class ServantTreasureDeviceIG(Integrator):
@@ -97,6 +104,10 @@ class ServantTreasureDeviceIG(Integrator):
             new['title'] = '强化后'
             treasure_devices.insert(1, new)
         return treasure_devices
+
+    def fallback_handle(self, mst_treasure_devices):
+        
+        pass
 
     def masterdata_treasure_devices(self, svt_id: int):
         res = self.con.execute(
