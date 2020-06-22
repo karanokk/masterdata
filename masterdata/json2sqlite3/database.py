@@ -20,10 +20,26 @@ def register():
 
 class JSDatabase:
     def __init__(self, path=':memory:'):
-        self.con = sqlite3.connect(path, detect_types=sqlite3.PARSE_COLNAMES)
+        self.con = sqlite3.connect(path, detect_types=sqlite3.PARSE_COLNAMES, isolation_level=None)
         register()
 
+    def __getattr__(self, name):
+        return getattr(self.con, name)
+
+    def __del__(self):
+        self.con.close() 
+
+    def begain(self):
+        self.con.execute("BEGIN")
+
+    def commit(self):
+        self.con.execute("COMMIT")
+
+    def rollback(self):
+        self.con.execute("ROLLBACK")
+
     def load_json(self, tables):
+        self.begain()
         for table_name, rows in tables.items():
             if not (isinstance(rows, list) and len(rows)):
                 continue
@@ -38,7 +54,7 @@ class JSDatabase:
             keys = rows[0].keys()
             insert_sql = f'INSERT INTO {table_name} ({",".join(keys)}) values ({",".join(["?"] * len(keys))})'
             self.con.executemany(insert_sql, map(lambda x: tuple(x.values()), rows))
-        self.con.commit()
+        self.commit()
 
     def close(self):
         self.con.close()

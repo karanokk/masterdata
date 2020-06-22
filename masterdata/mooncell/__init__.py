@@ -22,17 +22,17 @@ def integrate_into_db(path):
 
     Some custom tables(contents from `mooncell`) will be added.
     """
-    con = JSDatabase(path).con
+    db = JSDatabase(path)
     servants = extract_servants()
-    servant_ig = ServantIG(con, './patch/')
+    db.begain()
+    servant_ig = ServantIG(db.con, './patch/')
     for servant in servants:
         servant_ig.integrate(servant)
     # TODO: missions
     with open('./patch/custom.sql') as f:
         custom_patch = f.read()
-    con.executescript(custom_patch)
-    con.commit()
-    con.close()
+    db.executescript(custom_patch)
+    db.commit()
 
 
 __all__ = ['dump', 'integrate_into_db', 'extract_servants']

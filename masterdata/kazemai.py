@@ -72,5 +72,4 @@ def make_database(path: str = ':memory:') -> JSDatabase:
     svt_ids = [i[0] for i in db.con.execute(query)]
     comment_json = {'mstSvtComment': fetch_comments(svt_ids)}
     db.load_json(comment_json)
-    db.close()
     return db
