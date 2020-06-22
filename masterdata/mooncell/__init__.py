@@ -24,11 +24,13 @@ def integrate_into_db(path):
     """
     con = JSDatabase(path).con
     servants = extract_servants()
-    servants.pop(0)
-    servant_ig = ServantIG(con)
+    servant_ig = ServantIG(con, './patch/')
     for servant in servants:
         servant_ig.integrate(servant)
     # TODO: missions
+    with open('./patch/custom.sql') as f:
+        custom_patch = f.read()
+    con.executescript(custom_patch)
     con.commit()
     con.close()
 

@@ -4,14 +4,21 @@ from copy import deepcopy
 from .common import Integrator
 from ..exceptions import MismatchedData
 from ...utils import flatten
+from os import path
+import json
 
 
 class ServantIG(Integrator):
-    def __init__(self, con: sqlite3.Connection):
+    def __init__(self, con: sqlite3.Connection, fallback_file_dir: str):
         super().__init__(con)
-
-        self.td_ig = ServantTreasureDeviceIG(con)
-        self.skill_ig = ServantSkillIG(con)
+        with open(path.join(fallback_file_dir, 'treasure_device.json')) as td_f:
+            td_data = json.load(td_f)
+            self.td_ig = ServantTreasureDeviceIG(con, td_data)
+        
+        with open(path.join(fallback_file_dir, 'skill.json')) as skill_f:
+            skill_data = json.load(skill_f)
+            self.skill_ig = ServantSkillIG(con, skill_data)
+            
         self.class_skill_ig = ServantClassSkillIG(con)
         self.material_ig = ServantMaterialIG(con)
         self.comment_ig = ServantCommentIG(con)
@@ -37,7 +44,8 @@ class ServantIG(Integrator):
         self.class_skill_ig.integrate(svt_id, servant['passives'])
 
         try:
-            self.material_ig.integrate(svt_id, servant['ascension_materials'])
+            if svt_id != 800100:
+                self.material_ig.integrate(svt_id, servant['ascension_materials'])
             self.material_ig.integrate(svt_id, servant['skill_materials'])
         except MismatchedData as err:
             self.logger.error(f'{servant["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
@@ -54,7 +62,6 @@ class ServantIG(Integrator):
 
 
 class ServantTreasureDeviceIG(Integrator):
-
     def setup(self):
         self.rename_column('mstTreasureDeviceDetail', detail='jpDescriptions')
         self.add_column('mstTreasureDeviceDetail', cnDescriptions='TEXT', levelValues='TEXT')
@@ -65,6 +72,8 @@ class ServantTreasureDeviceIG(Integrator):
     def integrate(self, svt_id: int, treasure_devices):
         tds = self._pre_process(treasure_devices)
         mst_tds = self.masterdata_treasure_devices(svt_id)
+
+        updated_td_ids = []
 
         for td in tds:
             title = td['title']
@@ -89,11 +98,14 @@ class ServantTreasureDeviceIG(Integrator):
                         td_id, td['name'], td['type_text'])
                     self.update_treasure_device_detail(
                         td_id, td['detail'], td['value'])
+                    updated_td_ids.append(td_id)
                     break
 
-        if len(mst_tds) != len(tds):
-            raise MismatchedData(tds, mst_tds)
-
+        if sorted(mst_tds) != sorted(updated_td_ids):
+            count = self.fallback(str(svt_id))
+            if len(mst_tds) != count: # simple validation
+                raise MismatchedData(tds, mst_tds)
+    
     @classmethod
     def _pre_process(cls, treasure_devices):
         treasure_devices = sorted(treasure_devices, key=lambda td: td['title'])
@@ -105,13 +117,9 @@ class ServantTreasureDeviceIG(Integrator):
             treasure_devices.insert(1, new)
         return treasure_devices
 
-    def fallback_handle(self, mst_treasure_devices):
-        
-        pass
-
     def masterdata_treasure_devices(self, svt_id: int):
         res = self.con.execute(
-            'SELECT treasureDeviceId, strengthStatus, flag FROM mstSvtTreasureDevice WHERE svtId=? AND num=1',
+            'SELECT DISTINCT treasureDeviceId, strengthStatus, flag FROM mstSvtTreasureDevice WHERE svtId=? AND num=1',
             (svt_id,)).fetchall()
         return res
 
@@ -135,6 +143,7 @@ class ServantSkillIG(Integrator):
 
     def integrate(self, svt_id: int, skills):
         mst_skills = self.masterdata_skills(svt_id)
+        updated_skill_ids = []
 
         for skill in skills:
             title = skill['title']
@@ -152,12 +161,16 @@ class ServantSkillIG(Integrator):
                     self.update_skill(skill_id, skill['name'])
                     self.update_skill_detail(
                         skill_id, skill['detail'], skill['value'])
+                    updated_skill_ids.append(skill_id)
+                    break
 
-        if len(mst_skills) != len(skills):
-            raise MismatchedData(skills, mst_skills)
+        if sorted(mst_skills) != sorted(updated_skill_ids):
+            count = self.fallback(str(svt_id))
+            if len(mst_skills) != count: # simple validation
+                raise MismatchedData(skills, mst_skills)
 
     def masterdata_skills(self, svt_id: int):
-        res = self.con.execute('SELECT skillId, strengthStatus, flag, num FROM mstSvtSkill WHERE svtId=?',
+        res = self.con.execute('SELECT DISTINCT skillId, strengthStatus, flag, num FROM mstSvtSkill WHERE svtId=?',
                                (svt_id,)).fetchall()
         return res
 
