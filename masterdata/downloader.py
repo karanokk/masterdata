@@ -14,7 +14,7 @@ def download_file(url, timeout=10):
     return urlopen(url, timeout=timeout).read()
 
 
-def download_files(urls, concurrency_limit=10, headers=None):
+def download_files(urls, concurrency_limit=10, headers=None, cache_dir: str=None):
     async def async_download(sem, session: aiohttp.ClientSession, url):
         async with sem, session.get(url) as response:
             assert response.status == 200
@@ -23,7 +23,8 @@ def download_files(urls, concurrency_limit=10, headers=None):
     async def main():
         sem = asyncio.Semaphore(concurrency_limit)
         _headers = headers or DEFAULT_HEADERS
-        async with aiohttp.ClientSession(headers=_headers) as session:
+        conn = aiohttp.TCPConnector(limit=10)
+        async with aiohttp.ClientSession(headers=_headers, connector=conn) as session:
             tasks = [async_download(sem, session, url) for url in urls]
             res = asyncio.gather(*tasks)
             return await res
