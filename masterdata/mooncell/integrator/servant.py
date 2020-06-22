@@ -71,13 +71,14 @@ class ServantTreasureDeviceIG(Integrator):
 
     def integrate(self, svt_id: int, treasure_devices):
         tds = self._pre_process(treasure_devices)
+        has_strengthStatus = len(tds) > len(treasure_devices)
         mst_tds = self.masterdata_treasure_devices(svt_id)
 
         updated_td_ids = []
 
         for td in tds:
             title = td['title']
-            strength_status = 0
+            strength_status = 1 if has_strengthStatus else 0
             flag = 0
             if title == '强化前':
                 strength_status = 1
@@ -101,7 +102,7 @@ class ServantTreasureDeviceIG(Integrator):
                     updated_td_ids.append(td_id)
                     break
 
-        if sorted(mst_tds) != sorted(updated_td_ids):
+        if len(mst_tds) != len(updated_td_ids):
             count = self.fallback(str(svt_id))
             if len(mst_tds) != count: # simple validation
                 raise MismatchedData(tds, mst_tds)
@@ -147,11 +148,12 @@ class ServantSkillIG(Integrator):
 
         for skill in skills:
             title = skill['title']
-            strength_status = 0
             if title == '强化前':
                 strength_status = 1
             elif title == '强化后':
                 strength_status = 2
+            else:
+                strength_status = 0
             num = skill['num']
             flag = 0
 
@@ -164,7 +166,7 @@ class ServantSkillIG(Integrator):
                     updated_skill_ids.append(skill_id)
                     break
 
-        if sorted(mst_skills) != sorted(updated_skill_ids):
+        if len(mst_skills) != len(updated_skill_ids):
             count = self.fallback(str(svt_id))
             if len(mst_skills) != count: # simple validation
                 raise MismatchedData(skills, mst_skills)
