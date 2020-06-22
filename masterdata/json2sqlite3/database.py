@@ -27,7 +27,7 @@ class JSDatabase:
         return getattr(self.con, name)
 
     def __del__(self):
-        self.con.close() 
+        self.con.close()
 
     def begain(self):
         self.con.execute("BEGIN")

@@ -1,11 +1,11 @@
+import json
 import sqlite3
 from copy import deepcopy
+from os import path
 
 from .common import Integrator
 from ..exceptions import MismatchedData
 from ...utils import flatten
-from os import path
-import json
 
 
 class ServantIG(Integrator):
@@ -14,11 +14,11 @@ class ServantIG(Integrator):
         with open(path.join(fallback_file_dir, 'treasure_device.json')) as td_f:
             td_data = json.load(td_f)
             self.td_ig = ServantTreasureDeviceIG(con, td_data)
-        
+
         with open(path.join(fallback_file_dir, 'skill.json')) as skill_f:
             skill_data = json.load(skill_f)
             self.skill_ig = ServantSkillIG(con, skill_data)
-            
+
         self.class_skill_ig = ServantClassSkillIG(con)
         self.material_ig = ServantMaterialIG(con)
         self.comment_ig = ServantCommentIG(con)
@@ -104,9 +104,9 @@ class ServantTreasureDeviceIG(Integrator):
 
         if len(mst_tds) != len(updated_td_ids):
             count = self.fallback(str(svt_id))
-            if len(mst_tds) != count: # simple validation
+            if len(mst_tds) != count:  # simple validation
                 raise MismatchedData(tds, mst_tds)
-    
+
     @classmethod
     def _pre_process(cls, treasure_devices):
         treasure_devices = sorted(treasure_devices, key=lambda td: td['title'])
@@ -168,7 +168,7 @@ class ServantSkillIG(Integrator):
 
         if len(mst_skills) != len(updated_skill_ids):
             count = self.fallback(str(svt_id))
-            if len(mst_skills) != count: # simple validation
+            if len(mst_skills) != count:  # simple validation
                 raise MismatchedData(skills, mst_skills)
 
     def masterdata_skills(self, svt_id: int):

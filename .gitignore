@@ -126,3 +126,6 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
+
+# custom
+jp_masterdata(test).sqlite3

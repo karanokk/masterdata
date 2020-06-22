@@ -1,9 +1,8 @@
+import aiohttp
 import asyncio
 import string
 from urllib.parse import quote
 from urllib.request import urlopen
-
-import aiohttp
 
 DEFAULT_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4090.0 Safari/537.36 Edg/83.0.467.0 '}
@@ -14,7 +13,7 @@ def download_file(url, timeout=10):
     return urlopen(url, timeout=timeout).read()
 
 
-def download_files(urls, concurrency_limit=10, headers=None, cache_dir: str=None):
+def download_files(urls, concurrency_limit=10, headers=None, cache_dir: str = None):
     async def async_download(sem, session: aiohttp.ClientSession, url):
         async with sem, session.get(url) as response:
             assert response.status == 200

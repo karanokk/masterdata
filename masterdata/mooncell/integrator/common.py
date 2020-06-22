@@ -3,7 +3,7 @@ import sqlite3
 
 
 class Integrator:
-       
+
     def __init__(self, con: sqlite3.Connection, fallback_data: dict = None):
         self.con = con
         self.fallback_data = fallback_data
@@ -35,5 +35,5 @@ class Integrator:
                 keys, values = zip(*kv.items())
                 fields = ', '.join(map(lambda k: f'{k}=?', keys))
                 sql = f'UPDATE {table_name} SET {fields} WHERE id=?'
-                self.con.execute(sql, values + (_id, ))
+                self.con.execute(sql, values + (_id,))
         return count
