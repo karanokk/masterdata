@@ -14,6 +14,10 @@ class TestMooncell(unittest.TestCase):
         else:
             self.db = kazemai.make_database(path)
 
+    def test_extract(self):
+        servant = extract.extract_servants(['齐格飞'])[0]
+        print(servant)
+
     def test_integrate(self):
         servants = extract.extract_servants(['玛修·基列莱特', '宫本武藏', '不夜城的Assassin', '所罗门', 'BeastⅢ／L'])
         self.db.begain()

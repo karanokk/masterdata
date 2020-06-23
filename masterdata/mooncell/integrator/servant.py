@@ -26,20 +26,32 @@ class ServantIG(Integrator):
     def setup(self):
         self.rename_column('mstSvt', name='jpName')
         self.add_column('mstSvt', cnName='TEXT')
+        self.rename_column('mstCv', name='jpName')
+        self.add_column('mstCv', cnName='TEXT')
+        self.rename_column('mstIllustrator', name='jpName')
+        self.add_column('mstIllustrator', cnName='TEXT')
 
     def integrate(self, servant):
-        collection_no = servant['collection_no']
+        basic_data = servant['basic_data']
+        collection_no = basic_data['collection_no']
+
         svt_id = self.svt_id(collection_no)
+        cv_id = self.cv_id(svt_id)
+        illustrator_id = self.illustrator_id(svt_id)
+        
+        self.update_svt_name(svt_id, basic_data['name'])
+        self.update_cv_name(cv_id, basic_data['cv'])
+        self.update_illustrator_name(illustrator_id, basic_data['illustrator'])
 
         try:
             self.td_ig.integrate(svt_id, servant['treasure_devices'])
         except MismatchedData as err:
-            self.logger.error(f'{servant["name"]}: mismatched treasure devices\n{err.mc_data}\n{err.mst_data}')
+            self.logger.error(f'{basic_data["name"]}: mismatched treasure devices\n{err.mc_data}\n{err.mst_data}')
 
         try:
             self.skill_ig.integrate(svt_id, servant['skills'])
         except MismatchedData as err:
-            self.logger.error(f'{servant["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
+            self.logger.error(f'{basic_data["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
 
         self.class_skill_ig.integrate(svt_id, servant['passives'])
 
@@ -48,17 +60,33 @@ class ServantIG(Integrator):
                 self.material_ig.integrate(svt_id, servant['ascension_materials'])
             self.material_ig.integrate(svt_id, servant['skill_materials'])
         except MismatchedData as err:
-            self.logger.error(f'{servant["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
+            self.logger.error(f'{basic_data["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
 
         self.comment_ig.integrate(svt_id, servant['bond_stories'])
 
     def svt_id(self, collection_no):
-        sql = 'SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2 or type=9);'
+        sql = 'SELECT id FROM mstSvt WHERE collectionNo=? and (type=1 or type=2 or type=9)'
         res = self.con.execute(sql, (collection_no,)).fetchone()
         return res[0]
 
+    def cv_id(self, svt_id):
+        sql = 'SELECT cvId FROM mstSvt WHERE id=?'
+        res = self.con.execute(sql, (svt_id,)).fetchone()
+        return res[0]
+
+    def illustrator_id(self, svt_id):
+        sql = 'SELECT illustratorId FROM mstSvt WHERE id=?'
+        res = self.con.execute(sql, (svt_id,)).fetchone()
+        return res[0]
+
     def update_svt_name(self, svt_id, name):
-        self.con.execute('UPDATE mstSvt SET cnName=?, WHERE id=?', (name, svt_id))
+        self.con.execute('UPDATE mstSvt SET cnName=? WHERE id=?', (name, svt_id))
+    
+    def update_cv_name(self, cv_id, name):
+        self.con.execute('UPDATE mstCv SET cnName=? WHERE id=?', (name, cv_id))
+
+    def update_illustrator_name(self, illustrator_id, name):
+        self.con.execute('UPDATE mstIllustrator SET cnName=? WHERE id=?', (name, illustrator_id))
 
 
 class ServantTreasureDeviceIG(Integrator):

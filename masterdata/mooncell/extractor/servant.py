@@ -23,17 +23,16 @@ class ServantExtractor(MooncellExtractor):
         assert len(names) == len(values)
         return names, values
 
-    def extract_name(self):
+    def extract_basic_data(self):
         table = next(self.find_tables('基础数值', self.WT_NOMOBILE))
         name = table.xpath('string(tbody/tr[1]/th[1])').rstrip('\n')
-        return name
-
-    def extract_collection_no(self):
-        table = next(self.find_tables('基础数值', self.WT_NOMOBILE))
         res = table.xpath('tbody/tr[1]/th[2]/text()')[0].rstrip('\n')
         if not res:
             res = table.xpath('tbody/tr[3]/th/text()')[0].rstrip('\n')
-        return int(res[3:])
+        collection_no =  int(res[3:])
+        cv = table.xpath('tbody/tr[5]/td[1]/a/text()')[0]
+        illustrator = table.xpath('tbody/tr[5]/td[2]/a/text()')[0]
+        return {'name': name, 'collection_no': collection_no, 'cv': cv, 'illustrator': illustrator}        
 
     def extract_treasure_devices(self):
         tables = self.find_tables('宝具', self.WT_NOMOBILE_LOGO)
