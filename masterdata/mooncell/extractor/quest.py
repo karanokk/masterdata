@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import re
 
-from .common import MooncellExtractor
+from .common import MooncellIE
 
 
-class MissionExtractor(MooncellExtractor):
-    ch_int_map = {
+class QuestIE(MooncellIE):
+    ch_num_map = {
         '一': 1,
         '二': 2,
         '三': 3,
@@ -18,20 +17,20 @@ class MissionExtractor(MooncellExtractor):
         '十': 10
     }
 
-    def _ch_to_int(self, s):
+    def chint(self, s):
         length = len(s)
         if length == 1:
-            return self.ch_int_map[s]
+            return self.ch_num_map[s]
         elif length == 2:
-            return self.ch_int_map[s[0]] + self.ch_int_map[s[1]]
+            return self.ch_num_map[s[0]] + self.ch_num_map[s[1]]
         elif length == 3:
-            return self.ch_int_map[s[0]] * 10 + self.ch_int_map[s[-1]]
+            return self.ch_num_map[s[0]] * 10 + self.ch_num_map[s[-1]]
         raise ValueError()
 
     def extract_main_quests(self):
         mains = []
         index = 0
-        for table in self.find_tables('主线关卡', self.WT_LOGO):
+        for table in self.tables_between(self._wikitable_logo, '主线关卡'):
             name = table.xpath('string(tbody/tr[1]/th/big)')
             node = table.getprevious()
             while 1:
@@ -47,7 +46,7 @@ class MissionExtractor(MooncellExtractor):
                             index = int(section)
                         except ValueError:
                             try:
-                                index = self._ch_to_int(section)
+                                index = self.chint(section)
                             except:
                                 index = 0
                     else:
@@ -65,19 +64,14 @@ class MissionExtractor(MooncellExtractor):
             quest = {
                 'chapterSubId': index,
                 'name': name,
-                'spotName': None
             }
             mains.append(quest)
         return mains
 
     def extract_free_quests(self):
-        """
-        Returns:
-            Spot name and mission name
-        """
         frees = []
         index = 1
-        for table in self.find_tables('自由关卡', self.WT_LOGO):
+        for table in self.tables_between(self._wikitable_logo, '自由关卡'):
             index_ele = table.getprevious()
             while 1:
                 if index_ele is None:

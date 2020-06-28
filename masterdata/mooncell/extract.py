@@ -1,7 +1,7 @@
 import logging
 import re
 
-from .extractor import ServantExtractor
+from .extractor import ServantIE
 from .. import downloader
 
 logger = logging.getLogger('masterdata.mooncell')
@@ -24,7 +24,7 @@ def extract_servants(name_links=None):
         name_links = get_servant_name_links()
     urls = [EndPoints.page_with_name(name) for name in name_links]
     files = downloader.download_files(urls)
-    return [ServantExtractor(file).extract() for file in files]
+    return [ServantIE(file).extract() for file in files]
 
 
 def get_servant_name_links():

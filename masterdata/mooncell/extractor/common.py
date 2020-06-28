@@ -1,74 +1,68 @@
-# -*- coding: utf-8 -*-
 import logging
+from typing import Union
 
 from lxml import etree
 
-logger = logging.getLogger('masterdata.mooncell')
+logger = logging.getLogger('masterdata.mooncell.extractor')
 
 
-class MediaWikiExtractor:
-    def __init__(self, html):
-        """`html`起始于`<div class="mw-parser-output">`
-        """
+class InfoExtractor:
+    _wikitable_nomobile_logo = 'wikitable nomobile logo'
+    _wikitable_logo = 'wikitable logo'
+    _wikitable_nomobile = 'wikitable nomobile'
+    _wikitable = 'wikitable'
+    _nomobile = 'nomobile'
+    _mw_wikitable_nomobile = 'wikitable mw-collapsible mw-collapsed nomobile'
+
+    def __init__(self, html: Union[bytes, str]):
         self.root = etree.HTML(html)
 
-    def find(self, section_name):
-        """列出两个`h`节点之间的同级节点
+    def title(self):
+        return self.root.xpath('/html/head/title/text()')[0]
 
-        节点起始于`section_name`，结束于下个`h`节点
+    def extract(self, key: str = 'extract_') -> dict:
+        info = {}
+        drop_index = len(key)
+        for fn_name in type(self).__dict__.keys():
+            if fn_name.startswith(key):
+                name = fn_name[drop_index:]
+                extract_fn = getattr(self, fn_name)
+                try:
+                    res = extract_fn()
+                except:
+                    logger.error(
+                        f'Failed to extract {name} in "{self.title()}".')
+                else:
+                    info[name] = res
+        return info
+
+
+class MooncellIE(InfoExtractor):
+    def elements_between(self, start: str, end: str = None):
+        """Return a iterator of sibling elements between start and end section.
+        End up with same tag of start section if end is None.
         """
-        node = self.root.find(f'.//span[@id="{section_name}"]/..')
+        node = self.root.find(f'.//span[@id="{start}"]/..')
         if node is None:
             return None
         stop_tag = node.tag
         while 1:
             node = node.getnext()
-            tag = node.tag
-            if tag == stop_tag or (not isinstance(tag, str)) or (
-                    len(tag) > 1 and tag.startswith('h') and tag < stop_tag):
-                break
+            if end:
+                if node.xpath('string(.)') == end:
+                    break
+            else:
+                tag = node.tag
+                if tag == stop_tag or (not isinstance(tag, str)) or (
+                        len(tag) > 1 and tag.startswith('h') and tag < stop_tag):
+                    break
             yield node
 
-    def title(self):
-        return self.root.xpath('/html/head/title/text()')[0]
-
-    def extract(self):
-        info_dict = {}
-        for func_name in type(self).__dict__.keys():
-            if func_name.startswith("extract_"):
-                name = func_name[8:]
-                extract_fn = getattr(self, func_name)
-                try:
-                    res = extract_fn()
-                except:
-                    logger.error(f'Failed to extract {name} in "{self.title()}".')
-                else:
-                    info_dict[name] = res
-        return info_dict
-
-
-class MooncellExtractor(MediaWikiExtractor):
-    WT_NOMOBILE_LOGO = 'wikitable nomobile logo'
-    WT_LOGO = 'wikitable logo'
-    WT_NOMOBILE = 'wikitable nomobile'
-    WT = 'wikitable'
-    NOMOBILE = 'nomobile'
-    WT_MW_NOMOBILE = 'wikitable mw-collapsible mw-collapsed nomobile'
-
-    def __init__(self, html):
-        super(MooncellExtractor, self).__init__(html)
-        self.resource_domain = "https://fgo.wiki/w"
-
-    def find_tables(self, section_name, table_class, keep_struct=False):
-        """过滤出小节中的表格
-
-        :params section_name: 小节的名称
-        :params table_class: 表格的`class`
-        :params keep_struct: 是否保持表格之间的层级结构，默认不保持，平级输出
-
-        :yield: 表格节点
+    def tables_between(self, table_class: str, start: str, end: str = None, keep_struct=False):
+        """Return a iterator of sibling tables between start and end section.
+        End up with same tag of start section if end is None.
         """
-        for node in self.find(section_name):
+        for node in self.elements_between(start, end):
             cls = node.get('class')
             if not cls and table_class is not None:
                 continue
