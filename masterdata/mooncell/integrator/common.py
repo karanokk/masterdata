@@ -23,6 +23,12 @@ class Integrator:
         for name, type_name in kw.items():
             self.con.execute(f'ALTER TABLE {table} ADD {name} {type_name}')
 
+    def update(self, table: str, id: int, **kw):
+        keys, values = zip(*kw.items())
+        fields = ', '.join(map(lambda k: f'{k}=?', keys))
+        sql = f'UPDATE {table} SET {fields} WHERE id=?'
+        self.con.execute(sql, values + (id, ))
+
     def fallback(self, key: str) -> int:
         if key not in self.fallback_data:
             return 0

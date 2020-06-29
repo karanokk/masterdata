@@ -18,3 +18,19 @@ def write_new_master_js_id(file, j_id):
         f.truncate()
         ver["master_js_id"] = j_id
         json.dump(ver, f)
+
+
+class Mst:
+    """Table names"""
+    Svt = 'mstSvt'
+    Cv = 'mstCv'
+    Illustrator = 'mstIllustrator'
+    TreasureDevice = 'mstTreasureDevice'
+    TreasureDeviceDetail = 'mstTreasureDeviceDetail'
+    Skill = 'mstSkill'
+    SkillDetail = 'mstSkillDetail'
+    Item = 'mstItem'
+    SvtComment = 'mstSvtComment'
+    Quest = 'mstQuest'
+    Spot = 'mstSpot'
+    War = 'mstWar'

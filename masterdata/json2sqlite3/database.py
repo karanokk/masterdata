@@ -20,7 +20,8 @@ def register():
 
 class JSDatabase:
     def __init__(self, path=':memory:'):
-        self.con = sqlite3.connect(path, detect_types=sqlite3.PARSE_COLNAMES, isolation_level=None)
+        self.con = sqlite3.connect(path, detect_types=sqlite3.PARSE_COLNAMES,
+                                   isolation_level=None)
         register()
 
     def __getattr__(self, name):
@@ -53,7 +54,8 @@ class JSDatabase:
             # insert rows
             keys = rows[0].keys()
             insert_sql = f'INSERT INTO {table_name} ({",".join(keys)}) values ({",".join(["?"] * len(keys))})'
-            self.con.executemany(insert_sql, map(lambda x: tuple(x.values()), rows))
+            self.con.executemany(insert_sql, map(
+                lambda x: tuple(x.values()), rows))
         self.commit()
 
     def close(self):

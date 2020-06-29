@@ -13,8 +13,8 @@ class ServantIE(MooncellIE):
         if not res:
             res = table.xpath('tbody/tr[3]/th/text()')[0].rstrip('\n')
         collection_no = int(res[3:])
-        cv = table.xpath('tbody/tr[5]/td[1]/a/text()')[0]
-        illustrator = table.xpath('tbody/tr[5]/td[2]/a/text()')[0]
+        cv = table.xpath('tbody/tr[5]/td[2]/a/text()')[0]
+        illustrator = table.xpath('tbody/tr[5]/td[1]/a/text()')[0]
         del table, res, self
         return locals()
 
@@ -46,9 +46,10 @@ class ServantIE(MooncellIE):
     @classmethod
     def _extract_treasure_device(cls, table):
         trs = table.xpath('tbody/tr')
+        title = table.getparent().get('title')
         name = trs[0].xpath('string(td/div/big)')
         type_text = trs[0].xpath('string(th/p[last()])')
-        effetcs, level_values = cls._extract_level_effects(
+        effects, level_values = cls._extract_level_effects(
             trs[2 - len(trs) % 2:])
         del trs, table, cls
         return locals()
@@ -69,7 +70,7 @@ class ServantIE(MooncellIE):
         trs = table.xpath('tbody/tr')
         name = trs[0].xpath('string(th[2])').rstrip('\n')
         title = table.getparent().get('title')
-        effetcs, level_values = cls._extract_level_effects(trs[2:])
+        effects, level_values = cls._extract_level_effects(trs[2:])
         del trs, cls
         return locals()
 

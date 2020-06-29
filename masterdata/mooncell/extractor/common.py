@@ -42,9 +42,11 @@ class MooncellIE(InfoExtractor):
         """Return a iterator of sibling elements between start and end section.
         End up with same tag of start section if end is None.
         """
-        node = self.root.find(f'.//span[@id="{start}"]/..')
-        if node is None:
+        node = self.root.xpath(
+            f'.//span[@class="mw-headline" and text()="{start}"]/..')
+        if not node:
             return None
+        node = node[0]
         stop_tag = node.tag
         while 1:
             node = node.getnext()

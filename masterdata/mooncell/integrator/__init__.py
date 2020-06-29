@@ -1,2 +1,2 @@
-from .mission import MissionIG
+from .quest import QuestIG
 from .servant import ServantIG

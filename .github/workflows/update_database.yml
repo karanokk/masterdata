@@ -28,6 +28,8 @@ jobs:
         python-version: '3.7'
     - name: Install Pipenv
       uses: dschep/install-pipenv-action@v1
+    - name: Install Dependencies
+      run: pipenv install
     - name: Cache Python dependencies
       id: cache
       uses: actions/cache@v2
@@ -36,8 +38,6 @@ jobs:
         key: ${{ runner.os }}-masterdata-cache
         restore-keys: |
           ${{ runner.os }}-masterdata-cache
-    - name: Install Dependencies
-      run: pipenv install
     - name: Get Gist
       id: get
       uses: andymckay/get-gist-action@master
@@ -59,7 +59,7 @@ jobs:
         tag_name: ${{ steps.args.outputs.ver }}
         release_name: ${{ steps.args.outputs.ver }}
         draft: false
-        prerelease: false
+        prerelease: true
     - name: Upload Release Asset
       if: steps.database.outputs.hasUpdate == 'true'
       uses: actions/upload-release-asset@v1

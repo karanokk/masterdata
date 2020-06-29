@@ -9,7 +9,8 @@ def dump(dir_name: str):
     import json
     servants = extract_servants()
     for servant in servants:
-        path = join(dir_name, f'No.{servant["collection_no"]}_{servant["name"]}.json')
+        path = join(
+            dir_name, f'No.{servant["collection_no"]}_{servant["name"]}.json')
         with open(path, 'w+') as f:
             json.dump(servant, f)
 
@@ -28,11 +29,11 @@ def integrate_into_db(path):
     servant_ig = ServantIG(db.con, './patch/')
     for servant in servants:
         servant_ig.integrate(servant)
-    # TODO: missions
+    db.commit()
+    # TODO: quests
     with open('./patch/custom.sql') as f:
         custom_patch = f.read()
     db.executescript(custom_patch)
-    db.commit()
 
 
 __all__ = ['dump', 'integrate_into_db', 'extract_servants']

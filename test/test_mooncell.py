@@ -19,7 +19,8 @@ class TestMooncell(unittest.TestCase):
         print(servant)
 
     def test_integrate(self):
-        servants = extract.extract_servants(['玛修·基列莱特', '宫本武藏', '不夜城的Assassin', '所罗门', 'BeastⅢ／L'])
+        servants = extract.extract_servants(
+            ['玛修·基列莱特', '宫本武藏', '不夜城的Assassin', '所罗门', 'BeastⅢ／L'])
         self.db.begain()
         ig = integrator.ServantIG(self.db.con, './patch/')
         try:
@@ -27,6 +28,14 @@ class TestMooncell(unittest.TestCase):
                 ig.integrate(servant)
         finally:
             self.db.rollback()
+
+    def test_a(self):
+        import sqlite3
+        self.db.con.row_factory = sqlite3.Row
+        r = self.db.execute(
+            'SELECT *, count(distinct treasureDeviceId) FROM mstSvtTreasureDevice WHERE svtId=100800 AND num=1').fetchone()
+        self.db.con.row_factory = None
+        print(r)
 
 
 if __name__ == '__main__':

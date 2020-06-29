@@ -2,10 +2,11 @@ import json
 import sqlite3
 from copy import deepcopy
 from os import path
+from typing import List
 
-from .common import Integrator
+from ...utils import flatten, Mst
 from ..exceptions import MismatchedData
-from ...utils import flatten
+from .common import Integrator
 
 
 class ServantIG(Integrator):
@@ -24,21 +25,17 @@ class ServantIG(Integrator):
         self.comment_ig = ServantCommentIG(con)
 
     def setup(self):
-        self.rename_column('mstSvt', name='jpName')
-        self.add_column('mstSvt', cnName='TEXT')
-        self.rename_column('mstCv', name='jpName')
-        self.add_column('mstCv', cnName='TEXT')
-        self.rename_column('mstIllustrator', name='jpName')
-        self.add_column('mstIllustrator', cnName='TEXT')
+        for table in (Mst.Svt, Mst.Cv, Mst.Illustrator):
+            self.rename_column(table, name='jpName')
+            self.add_column(table, cnName='TEXT')
 
     def integrate(self, servant):
         basic_data = servant['basic_data']
         collection_no = basic_data['collection_no']
 
         svt_id = self.svt_id(collection_no)
-        cv_id = self.cv_id(svt_id)
-        illustrator_id = self.illustrator_id(svt_id)
-        
+        cv_id, illustrator_id = self.cv_illustrator_id(svt_id)
+
         self.update_svt_name(svt_id, basic_data['name'])
         self.update_cv_name(cv_id, basic_data['cv'])
         self.update_illustrator_name(illustrator_id, basic_data['illustrator'])
@@ -46,21 +43,25 @@ class ServantIG(Integrator):
         try:
             self.td_ig.integrate(svt_id, servant['treasure_devices'])
         except MismatchedData as err:
-            self.logger.error(f'{basic_data["name"]}: mismatched treasure devices\n{err.mc_data}\n{err.mst_data}')
+            self.logger.error(
+                f'{basic_data["name"]}: mismatched treasure devices\n{err.mc_data}\n{err.mst_data}')
 
         try:
             self.skill_ig.integrate(svt_id, servant['skills'])
         except MismatchedData as err:
-            self.logger.error(f'{basic_data["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
+            self.logger.error(
+                f'{basic_data["name"]}: mismatched skills\n{err.mc_data}\n{err.mst_data}')
 
-        self.class_skill_ig.integrate(svt_id, servant['passives'])
+        self.class_skill_ig.integrate(svt_id, servant['class_skills'])
 
         try:
             if svt_id != 800100:
-                self.material_ig.integrate(svt_id, servant['ascension_materials'])
+                self.material_ig.integrate(
+                    svt_id, servant['ascension_materials'])
             self.material_ig.integrate(svt_id, servant['skill_materials'])
         except MismatchedData as err:
-            self.logger.error(f'{basic_data["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
+            self.logger.error(
+                f'{basic_data["name"]}: mismatched materials\n{err.mc_data}\n{err.mst_data}')
 
         self.comment_ig.integrate(svt_id, servant['bond_stories'])
 
@@ -69,33 +70,30 @@ class ServantIG(Integrator):
         res = self.con.execute(sql, (collection_no,)).fetchone()
         return res[0]
 
-    def cv_id(self, svt_id):
-        sql = 'SELECT cvId FROM mstSvt WHERE id=?'
+    def cv_illustrator_id(self, svt_id):
+        sql = 'SELECT cvId, illustratorId FROM mstSvt WHERE id=?'
         res = self.con.execute(sql, (svt_id,)).fetchone()
-        return res[0]
+        return res
 
-    def illustrator_id(self, svt_id):
-        sql = 'SELECT illustratorId FROM mstSvt WHERE id=?'
-        res = self.con.execute(sql, (svt_id,)).fetchone()
-        return res[0]
+    def update_svt_name(self, svt_id: int, name: str):
+        self.update(Mst.Svt, svt_id, cnName=name)
 
-    def update_svt_name(self, svt_id, name):
-        self.con.execute('UPDATE mstSvt SET cnName=? WHERE id=?', (name, svt_id))
-    
-    def update_cv_name(self, cv_id, name):
-        self.con.execute('UPDATE mstCv SET cnName=? WHERE id=?', (name, cv_id))
+    def update_cv_name(self, cv_id: int, name: str):
+        self.update(Mst.Cv, cv_id, cnName=name)
 
-    def update_illustrator_name(self, illustrator_id, name):
-        self.con.execute('UPDATE mstIllustrator SET cnName=? WHERE id=?', (name, illustrator_id))
+    def update_illustrator_name(self, illustrator_id: int, name: str):
+        self.update(Mst.Illustrator, illustrator_id, cnName=name)
 
 
 class ServantTreasureDeviceIG(Integrator):
     def setup(self):
-        self.rename_column('mstTreasureDeviceDetail', detail='jpDescriptions')
-        self.add_column('mstTreasureDeviceDetail', cnDescriptions='TEXT', levelValues='TEXT')
+        self.rename_column(Mst.TreasureDeviceDetail, detail='jpDescriptions')
+        self.add_column(Mst.TreasureDeviceDetail,
+                        cnDescriptions='TEXT', levelValues='TEXT')
 
-        self.rename_column('mstTreasureDevice', name='jpName', typeText='jpTypeText')
-        self.add_column('mstTreasureDevice', cnName='TEXT', cnTypeText='TEXT')
+        self.rename_column(Mst.TreasureDevice,
+                           name='jpName', typeText='jpTypeText')
+        self.add_column(Mst.TreasureDevice, cnName='TEXT', cnTypeText='TEXT')
 
     def integrate(self, svt_id: int, treasure_devices):
         tds = self._pre_process(treasure_devices)
@@ -126,7 +124,7 @@ class ServantTreasureDeviceIG(Integrator):
                     self.update_treasure_device(
                         td_id, td['name'], td['type_text'])
                     self.update_treasure_device_detail(
-                        td_id, td['detail'], td['value'])
+                        td_id, td['effects'], td['level_values'])
                     updated_td_ids.append(td_id)
                     break
 
@@ -152,23 +150,23 @@ class ServantTreasureDeviceIG(Integrator):
             (svt_id,)).fetchall()
         return res
 
-    def update_treasure_device(self, treasure_device_id, name, type_text):
-        self.con.execute('UPDATE mstTreasureDevice SET cnName=?, cnTypeText=? WHERE id=?',
-                         (name, type_text, treasure_device_id))
+    def update_treasure_device(self, treasure_device_id: int, name: str, type_text: str):
+        self.update(Mst.TreasureDevice, treasure_device_id,
+                    cnName=name, cnTypeText=type_text)
 
-    def update_treasure_device_detail(self, treasure_device_id, descriptions, level_values):
-        self.con.execute('UPDATE mstTreasureDeviceDetail SET cnDescriptions=?, levelValues=? WHERE id=?',
-                         (descriptions, level_values, treasure_device_id))
+    def update_treasure_device_detail(self, treasure_device_id: int, descriptions: List[str], level_values: List[str]):
+        self.update(Mst.TreasureDeviceDetail, treasure_device_id,
+                    cnDescriptions=descriptions, levelValues=level_values)
 
 
 class ServantSkillIG(Integrator):
     def setup(self):
-        self.rename_column('mstSkillDetail', detail='jpDescriptions')
-        self.add_column('mstSkillDetail',
+        self.rename_column(Mst.SkillDetail, detail='jpDescriptions')
+        self.add_column(Mst.SkillDetail,
                         cnDescriptions='TEXT', cnTypeText='TEXT', levelValues='TEXT')
 
-        self.rename_column('mstSkill', name='jpName')
-        self.add_column('mstSkill', cnName='TEXT')
+        self.rename_column(Mst.Skill, name='jpName')
+        self.add_column(Mst.Skill, cnName='TEXT')
 
     def integrate(self, svt_id: int, skills):
         mst_skills = self.masterdata_skills(svt_id)
@@ -190,7 +188,7 @@ class ServantSkillIG(Integrator):
                     skill_id = mst_skill[0]
                     self.update_skill(skill_id, skill['name'])
                     self.update_skill_detail(
-                        skill_id, skill['detail'], skill['value'])
+                        skill_id, skill['effects'], skill['level_values'])
                     updated_skill_ids.append(skill_id)
                     break
 
@@ -204,13 +202,12 @@ class ServantSkillIG(Integrator):
                                (svt_id,)).fetchall()
         return res
 
-    def update_skill(self, skill_id, name):
-        self.con.execute(
-            'UPDATE mstSkill SET cnName=? WHERE id=?', (name, skill_id))
+    def update_skill(self, skill_id: int, name: str):
+        self.update(Mst.Skill, skill_id, cnName=name)
 
-    def update_skill_detail(self, skill_id, descriptions, level_values):
-        self.con.execute('UPDATE mstSkillDetail SET cnDescriptions=?, levelValues=? WHERE id=?',
-                         (descriptions, level_values, skill_id))
+    def update_skill_detail(self, skill_id: int, descriptions: List[str], level_values: List[str]):
+        self.update(Mst.TreasureDeviceDetail, skill_id,
+                    cnDescriptions=descriptions, levelValues=level_values)
 
 
 class ServantClassSkillIG(ServantSkillIG):
@@ -222,7 +219,7 @@ class ServantClassSkillIG(ServantSkillIG):
         for skill_id, skill in zip(class_passive_ids, skills):
             self.update_skill(skill_id, skill['name'])
             self.update_skill_detail(
-                skill_id, skill['detail'], skill['value'])
+                skill_id, skill['effects'], skill['level_values'])
 
     def masterdata_class_passive_ids(self, svt_id):
         res = self.con.execute('SELECT classPassive as "classPassive [intList]" FROM mstSvt WHERE id=?',
@@ -274,13 +271,13 @@ class ServantMaterialIG(Integrator):
 
 class ServantCommentIG(Integrator):
     def setup(self):
-        self.rename_column('mstSvtComment', comment='jpComment')
-        self.add_column('mstSvtComment', cnComment='TEXT')
+        self.rename_column(Mst.SvtComment, comment='jpComment')
+        self.add_column(Mst.SvtComment, cnComment='TEXT')
 
-    def integrate(self, svt_id: int, comments):
-        for index, comment in enumerate(comments):
-            self.update_comment(svt_id, index + 1, comment[1])
+    def integrate(self, svt_id: int, comments: List[str]):
+        for index, comment in enumerate(comments, 1):
+            self.update_comment(svt_id, index, comment['story'])
 
-    def update_comment(self, svt_id, index, comment):
+    def update_comment(self, svt_id: int, index: int, comment: str):
         self.con.execute('UPDATE mstSvtComment SET cnComment=? WHERE svtId=? and id=?',
                          (comment, svt_id, index))
