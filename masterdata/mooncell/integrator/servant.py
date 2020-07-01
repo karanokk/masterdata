@@ -28,6 +28,7 @@ class ServantIG(Integrator):
         for table in (Mst.Svt, Mst.Cv, Mst.Illustrator):
             self.rename_column(table, name='jpName')
             self.add_column(table, cnName='TEXT')
+        self.add_column(Mst.Svt, nickNames='TEXT')
 
     def integrate(self, servant):
         basic_data = servant['basic_data']
@@ -37,6 +38,7 @@ class ServantIG(Integrator):
         cv_id, illustrator_id = self.cv_illustrator_id(svt_id)
 
         self.update_svt_name(svt_id, basic_data['name'])
+        self.update_nick_names(svt_id, basic_data['nick_names'])
         self.update_cv_name(cv_id, basic_data['cv'])
         self.update_illustrator_name(illustrator_id, basic_data['illustrator'])
 
@@ -83,6 +85,9 @@ class ServantIG(Integrator):
 
     def update_illustrator_name(self, illustrator_id: int, name: str):
         self.update(Mst.Illustrator, illustrator_id, cnName=name)
+
+    def update_nick_names(self, svt_id, nickNames: List[str]):
+        self.update(Mst.Svt, svt_id, nickNames=nickNames)
 
 
 class ServantTreasureDeviceIG(Integrator):

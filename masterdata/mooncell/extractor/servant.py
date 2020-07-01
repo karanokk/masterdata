@@ -6,6 +6,8 @@ from .common import MooncellIE
 class ServantIE(MooncellIE):
     def extract_basic_data(self):
         table = next(self.tables_between(self._wikitable_nomobile, '基础数值'))
+        nick_names = self.root.xpath(
+            'string(/html/head/meta[@name="keywords"]/@content)').split(',')
         name = table.xpath('string(tbody/tr[1]/th[1])').rstrip('\n')
         if '/' in name:  # 织田信长/织田吉法师/魔王信长
             name = name.split('/')[0]
