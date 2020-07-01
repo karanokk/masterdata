@@ -163,7 +163,7 @@ class ServantSkillIG(Integrator):
     def setup(self):
         self.rename_column(Mst.SkillDetail, detail='jpDescriptions')
         self.add_column(Mst.SkillDetail,
-                        cnDescriptions='TEXT', cnTypeText='TEXT', levelValues='TEXT')
+                        cnDescriptions='TEXT', levelValues='TEXT')
 
         self.rename_column(Mst.Skill, name='jpName')
         self.add_column(Mst.Skill, cnName='TEXT')
@@ -206,7 +206,7 @@ class ServantSkillIG(Integrator):
         self.update(Mst.Skill, skill_id, cnName=name)
 
     def update_skill_detail(self, skill_id: int, descriptions: List[str], level_values: List[str]):
-        self.update(Mst.TreasureDeviceDetail, skill_id,
+        self.update(Mst.SkillDetail, skill_id,
                     cnDescriptions=descriptions, levelValues=level_values)
 
 
