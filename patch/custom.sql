@@ -1,4 +1,5 @@
 UPDATE "mstSvt" SET "cnName" = '玛修·基列莱特' where id = 800100;
+UPDATE "mstSvt" SET "cnName" = '亨利·杰基尔＆海德' where id = 600710;
 -- mstCv
 UPDATE "mstCv" SET "cnName" = '野中蓝&川澄绫子' WHERE "id" = 16;
 UPDATE "mstCv" SET "cnName" = '神奈延年&泽城美雪' WHERE "id" = 19;
