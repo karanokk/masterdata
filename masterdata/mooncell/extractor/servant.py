@@ -8,6 +8,8 @@ class ServantIE(MooncellIE):
         table = next(self.tables_between(self._wikitable_nomobile, '基础数值'))
         nick_names = self.root.xpath(
             'string(/html/head/meta[@name="keywords"]/@content)').split(',')
+        if nick_names and nick_names[0] == '{{{昵称}}}':
+            nick_names = []
         name = table.xpath('string(tbody/tr[1]/th[1])').rstrip('\n')
         if '/' in name:  # 织田信长/织田吉法师/魔王信长
             name = name.split('/')[0]
@@ -85,8 +87,8 @@ class ServantIE(MooncellIE):
             if isinstance(table, list):
                 table = table[0]
             trs = table.xpath('tbody/tr')
+            name = None
             for tr in trs:
-                name = None
                 if tr[0].tag == 'th':  # name
                     name = tr.xpath('string(th[2])').rstrip('\n ')
                     level = tr.xpath('string(td)')
@@ -109,6 +111,7 @@ class ServantIE(MooncellIE):
                     class_skill = {'num': -1, 'name': name,
                                    'effects': effects, 'level_values': level_values}
                     class_skills.append(class_skill)
+                    name = None
         return class_skills
 
     @staticmethod
