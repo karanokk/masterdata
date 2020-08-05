@@ -47,9 +47,8 @@ class JSDatabase:
             # create table
             primary_keys = parse.possible_primary_keys(rows)
             primary_key = primary_keys[0] if primary_keys else None
-            row_temp = rows[0]
             creation_sql = parse.creation_sql(
-                table_name, row_temp, primary_key=primary_key)
+                table_name, rows, primary_key=primary_key)
             self.con.execute(creation_sql)
             # insert rows
             keys = rows[0].keys()

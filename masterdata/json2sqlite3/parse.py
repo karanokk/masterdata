@@ -1,6 +1,12 @@
 from typing import Union, List, Optional
 
 
+class SqliteType:
+    text = 'TEXT'
+    integer = 'INTEGER'
+    boolean = 'BOOLEAN'
+    real = 'REAL'
+
 def list2str(l: Union[list, str]) -> str:
     if isinstance(l, list):
         res = ','.join(map(list2str, l))
@@ -24,23 +30,33 @@ def restore_list(s: str, *, transform: callable = str):
 def sqlite_type(obj: object) -> str:
     obj_type = type(obj)
     if obj_type in (str, list, dict):
-        return 'TEXT'
+        return SqliteType.text
     elif obj_type == bool:
-        return 'BOOLEAN'
+        return SqliteType.boolean
     elif obj_type == int:
-        return 'INTEGER'
+        return SqliteType.integer
     elif obj_type == float:
-        return 'REAL'
+        return SqliteType.real
     elif obj is None:
         raise TypeError('Cannot infer type from a `None` value.')
     else:
         raise TypeError('Unsupported type.')
 
 
-def creation_sql(table_name: str, row: dict, *, primary_key=None):
+def creation_sql(table_name: str, rows: List[dict], *, primary_key=None):
     definitions = []
+    row = rows[0]
     for key, value in row.items():
-        s_type = sqlite_type(value)
+        try:
+            s_type = sqlite_type(value)
+        except TypeError:
+            s_type = None
+            for row in rows:
+                if row[key] is not None:
+                    s_type = sqlite_type(value)
+            if s_type is None:
+                s_type = SqliteType.text
+
         words = [key, s_type]
         if primary_key == key:
             words.append('PRIMARY KEY')
